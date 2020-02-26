@@ -1,0 +1,57 @@
+login to lazarus AWS manegment consol
+start 00-ASG-TEMPLATE-MASTER 
+
+then login to ==  Webserver-54.148.74.174
+#cd /var/www/html 
+#screen
+#tar cvf lazarusnaturals.com.tar.gz lazarusnaturals.com
+
+then login asg-template-master 
+now we have to copy web
+#cd /var/www/html
+#screen
+#sftp -oPort=2289 support@172.31.50.10
+password: yOdQ8ClqH0UJDBHJaoZDN9hDs
+          sftp> cd /var/www/html
+		  sftp> get lazarusnaturals.com.tar.gz
+		  sftp> exit
+		  
+then backup old web file
+#mv lazarusnaturals.com lazarusnaturals.com.bkp
+
+then extract live web file
+#tar xvf lazarusnaturals.com.tar.gz
+
+give ownership
+#chown -Rf www-data:www-data lazarusnaturals.com
+
+after that
+unlink /etc/hosts
+ln -s /prodefs/asg/asg1b/hosts hosts (do ls -ltr for check)
+go to aws console, Instance --> right click Image --> create Image give AMI name (PROD-ASG-TEMPLATE-14NOV-1B)  check on 'no reboot'
+go to AMI and assing AMI name 'PROD-ASG-TEMPLATE-14NOV-1B'
+go to Launch Configuration click on old LC and copy lauch configuartion then edit AMI and select Your latast AMI -->'PROD-ASG-TEMPLATE-14NOV-1B'
+choose Instance Type  (then select m4.2xlarge)
+				>Copy Launch Configuration from LC-14NOV-2019  (paste date)
+				
+				> Advanced Details then check and select (Assign a public IP address to every instance.)
+				
+				>Configure Security Group
+						select (1.CustomIP_Cloudflare, 2.CustomIP_Som, 3.PROD-WEB-SG)
+					
+					check all details and create launch configuration
+					
+			    >again we have to do
+				 and select current date Asg.
+				 
+				 in auto scalling groups edit auto scaling group 
+				 > assing lauch configuartion and save 
+				 > and again edit
+				Desired Capacity    1
+				Min					1	
+				Max					1
+				and save it  
+
+
+		  
+

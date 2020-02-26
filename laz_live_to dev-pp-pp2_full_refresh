@@ -1,0 +1,135 @@
+A) First we have to take web & db backup of lazarus server (Live) in screen
+   
+for db server 
+login to == 
+             DB1-54.203.110.66
+             
+			 then run the monitor script for backup location
+		     sh /som/home/monitor 99
+			 then copy the backup location of latast db
+            
+login to ==	
+            PP2-MYSQL-2B-52.26.97.166 OR
+            DEV-DB-SERVER-52.26.237.143			
+			
+	go to backup location	
+	# cd /s3backups/db1_54.203.110.66/db_backups/  ($latestdate)
+	
+	copy backups in /data/tempsync
+	#cp lazarlivedb.sql.gz /data/tempsync
+	
+	extract the file
+	# gunzip -d lazarlivedb.sql.gz
+		
+
+then run the find command in /data/tempsync
+(note: In tempsync directory there should be only one file that is lazarlivedb.sql )
+									
+									
+									For Preprod 
+									
+	# find . -type f -name "*.*" -print0 | xargs -0 sed -i '' -e 's/www.lazarusnaturals.com/preprod.lazarusnaturals.com/g'
+									
+									For Preprod2
+									
+	#  find . -type f -name "*.*" -print0 | xargs -0 sed -i '' -e 's/www.lazarusnaturals.com/preprod2.lazarusnaturals.com/g'
+	
+	                                For DEV
+									
+    #  find . -type f -name "*.*" -print0 | xargs -0 sed -i '' -e 's/www.lazarusnaturals.com/dev.lazarusnaturals.com/g'
+	
+after that login in mysql
+	
+	mysql> drop database DB name (preprod OR preprod2 OR dev )
+	mysql> create database DB name (preprod OR preprod2 OR dev )
+	
+	
+Restor the database
+	
+mysql -u root  -pr00t123007 database DB name < 	lazarlivedb.sql
+	
+then run this query in preprod and preprod2 DB servers
+	
+	mysql>use db name:
+	mysql>update wp_posts set post_status = 'wc-completed' where post_type = 'shop_order' and post_status ='wc-processing' ;
+	mysql> commit;
+	mysql> exit;
+
+
+	
+B) 
+For web servers preprod OR preprod2 OR dev
+
+    login to == 
+	           Webserver-54.148.74.174 
+			   
+			 then run the monitor script for backup location
+		     sh /som/home/monitor 99
+			 then copy the backup location of latast web 
+    
+	login to ==
+                PREPROD-WEB-44.224.5.195     OR
+			    PP2-WEBMASTER-100.20.214.188 OR
+			    DEV-Webserver-52.26.209.12	
+	# cd /s3backups/webmaster_54.148.74.174/web_backups/  (latest date)
+	
+	copy backups in /var/www/html/
+	#cp lazarusnaturals.com.tar.gz /var/www/html/
+	
+	extract the file 
+	# tar xvf lazarusnaturals.com.tar.gz
+	
+	then backup 5 important file of following 
+	# cd preprod.lazarusnaturals.com  OR 	preprod2.lazarusnaturals.com  OR  dev.lazarusnaturals.com 
+	
+1)
+Takes backups of following files of preprod.laz OR preprod2.laz or dev (copy or move in /var/www/html)
+	 
+	cp wp-config.php ../
+	cp archiveOrders/config.php ../
+	cp robots.txt ../
+	
+2)	
+	#rm -rf * in preprod.laz OR preprod2.laz OR dev 
+	ls -ltra 
+	rm -rf .htaccess .htaccess-backup .tmb .sucuriquarantine .quarantine
+	[DO NOT DELETE .git & .gitignore]
+	
+
+3)
+	# cd lazarusnaturals.com
+		remove from live backup:
+	#rm -rf .git .gitignore
+	#rm -rf wp-config.php
+	#rm -rf archiveOrders/config.php
+	#rm -rf robots.txt
+
+	4)
+move all from laz live backup to preprod.laz
+	
+	# cd /var/www/html/lazarusnaturals.com
+	
+	#mv * ../preprod.lazarusnaturals.com	OR 	 mv * ../preprod2.lazarusnaturals.com   OR   mv * ../dev.lazarusnaturals.com
+	
+	move all from laz live backup hidden files and folders to preprod.laz
+	
+	#mv .htaccess ../dev.lazarusnaturals.com
+	#mv ../.htaccess-backup ../dev.lazarusnaturals.com
+	#mv .tmb ../dev.lazarusnaturals.com
+	#mv .sucuriquarantine ../dev.lazarusnaturals.com
+	#mv .quarantine ../dev.lazarusnaturals.com  
+	
+	5) move the preprod's config files backup (from step 1) to preprod.laz
+	#mv wp-config dev.lazarusnaturals.com
+	#mv config.php dev.lazarusnaturals.com 
+	#mv robots.txt dev.lazarusnaturals.com
+
+	6)give ownership 
+	#chown -Rf www-data:www-data preprod.laz  OR Preprod2.laz  OR  dev.laz
+	
+	# su - www-data
+	# cd /var/www/html/preprod.laz		OR 		/var/www/html/preprod2.laz    OR    /var/www/html/dev.laz
+	#sync git. (www-data user)
+	#git add .
+	#git commit -m "New Files"
+	#git push
